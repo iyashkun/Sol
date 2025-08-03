@@ -15,7 +15,7 @@ const solanaConnection = new solanaWeb3.Connection(endpoint, 'confirmed');
 const DB_FILE = 'database.json';
 
 // Load database
-function loadDatabase() {
+async function loadDatabase() {
   try {
     const data = await fs.readFile(DB_FILE, 'utf8');
     return JSON.parse(data);
@@ -30,7 +30,7 @@ async function saveDatabase(db) {
 }
 
 // Initialize database
-let db = loadDatabase();
+
 
 // Command: /start
 bot.command('start', (ctx) => {
@@ -39,6 +39,7 @@ bot.command('start', (ctx) => {
 
 // Command: /track {sol_address} [label]
 bot.command('track', async (ctx) => {
+  const db = await loadDatabase();
   const args = ctx.match.split(' ');
   const address = args[0];
   const label = args.slice(1).join(' ') || address;
@@ -56,6 +57,7 @@ bot.command('track', async (ctx) => {
 
 // Command: /tracklist
 bot.command('tracklist', async (ctx) => {
+  const db = await loadDatabase();
   const wallets = db.wallets
     .filter((w) => w.chatId === ctx.chat.id)
     .map((w) => `${w.address} (${w.label})`)
@@ -65,6 +67,7 @@ bot.command('tracklist', async (ctx) => {
 
 // Command: /untrack {sol_address}
 bot.command('untrack', async (ctx) => {
+  const db = await loadDatabase();
   const address = ctx.match;
   db.wallets = db.wallets.filter((w) => w.address !== address || w.chatId !== ctx.chat.id);
   await saveDatabase(db);
@@ -73,6 +76,7 @@ bot.command('untrack', async (ctx) => {
 
 // Command: /stats {sol_address}
 bot.command('stats', async (ctx) => {
+  const db = await loadDatabase();
   const address = ctx.match;
   const transactions = db.transactions.filter((t) => t.address === address);
   const holdings = db.holdings.filter((h) => h.address === address);
@@ -87,6 +91,7 @@ bot.command('stats', async (ctx) => {
 
 // Monitor wallet for transactions
 async function monitorWallet(address, chatId) {
+  const db = await loadDatabase();
   const pubKey = new solanaWeb3.PublicKey(address);
   solanaConnection.onAccountChange(pubKey, async (accountInfo) => {
     const signatures = await solanaConnection.getSignaturesForAddress(pubKey, { limit: 1 });
@@ -128,6 +133,7 @@ function detectTransactionType(tx) {
 
 // Parse transaction details
 async function parseTransactionDetails(tx, type) {
+  const db = await loadDatabase();
   const details = { amount: 0, token: 'SOL', chartLink: null, marketCap: null, coinAddress: null };
   if (type === 'TokenTransfer') {
     const tokenProgram = tx.transaction.message.instructions.find(
@@ -162,6 +168,7 @@ async function getMarketCap(token) {
 
 // Update holdings
 async function updateHoldings(address, details) {
+  const db = await loadDatabase();
   const holding = db.holdings.find((h) => h.address === address && h.token === details.token);
   if (holding) {
     holding.amount += details.amount;
