@@ -15,7 +15,7 @@ const solanaConnection = new solanaWeb3.Connection(endpoint, 'confirmed');
 const DB_FILE = 'database.json';
 
 // Load database
-async function loadDatabase() {
+function loadDatabase() {
   try {
     const data = await fs.readFile(DB_FILE, 'utf8');
     return JSON.parse(data);
@@ -30,7 +30,7 @@ async function saveDatabase(db) {
 }
 
 // Initialize database
-let db = await loadDatabase();
+let db = loadDatabase();
 
 // Command: /start
 bot.command('start', (ctx) => {
