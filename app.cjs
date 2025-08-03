@@ -79,7 +79,7 @@ async function monitorWallet(address, chatId) {
 
 // Detect transaction type (simplified)
 function detectTransactionType(tx) {
-  const db = await loadDatabase();
+  // const db = await loadDatabase();
   const { instructions } = tx.transaction.message;
   if (instructions.some((i) => i.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')) {
     return 'TokenTransfer';
