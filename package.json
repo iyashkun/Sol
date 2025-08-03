@@ -1,0 +1,32 @@
+{
+  "name": "solana-tracker-bot",
+  "version": "1.0.0",
+  "description": "A Telegram bot to track Solana wallet transactions with advanced analytics",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@grammyjs/menu": "^1.2.2",
+    "@grammyjs/runner": "^2.0.3",
+    "@solana/spl-token": "^0.4.8",
+    "@solana/web3.js": "^1.95.3",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3",
+    "grammy": "^1.30.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
