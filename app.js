@@ -5,7 +5,7 @@ const axios = require('axios');
 const fs = require('fs').promises;
 
 // Initialize Telegram bot
-const bot = new Bot('YOUR_TELEGRAM_BOT_TOKEN');
+const bot = new Bot('7083800815:AAGLc5T_hjpNf6Ts43nTkGTyfbDAqjZihXM');
 
 // Solana connection
 const endpoint = 'https://api.mainnet-beta.solana.com'; // Replace with QuickNode/Helius
