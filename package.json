@@ -2,10 +2,10 @@
   "name": "solana-tracker-bot",
   "version": "1.0.0",
   "description": "A Telegram bot to track Solana wallet transactions with advanced analytics",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node app.js",
+    "dev": "nodemon app.js",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
