@@ -5,7 +5,7 @@ const axios = require('axios');
 const fs = require('fs').promises;
 
 // Initialize Telegram bot
-const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
+const bot = new Bot("7083800815:AAGLc5T_hjpNf6Ts43nTkGTyfbDAqjZihXM");
 
 // Solana connection
 const endpoint = process.env.SOLANA_RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com';
@@ -29,11 +29,9 @@ async function saveDatabase(db) {
   await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2));
 }
 
-// Initialize database
-let db = await loadDatabase();
-
 // Monitor wallet for transactions
 async function monitorWallet(address, chatId) {
+  const db = await loadDatabase();
   const pubKey = new solanaWeb3.PublicKey(address);
   solanaConnection.onAccountChange(pubKey, async (accountInfo) => {
     try {
@@ -81,6 +79,7 @@ async function monitorWallet(address, chatId) {
 
 // Detect transaction type (simplified)
 function detectTransactionType(tx) {
+  const db = await loadDatabase();
   const { instructions } = tx.transaction.message;
   if (instructions.some((i) => i.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')) {
     return 'TokenTransfer';
@@ -91,6 +90,7 @@ function detectTransactionType(tx) {
 
 // Parse transaction details
 async function parseTransactionDetails(tx, type) {
+  const db = await loadDatabase();
   const details = { amount: 0, token: 'SOL', chartLink: null, marketCap: null, coinAddress: null };
   if (type === 'TokenTransfer') {
     const tokenProgram = tx.transaction.message.instructions.find(
@@ -126,6 +126,7 @@ async function getMarketCap(token) {
 
 // Update holdings
 async function updateHoldings(address, details) {
+  const db = await loadDatabase();
   const holding = db.holdings.find((h) => h.address === address && h.token === details.token);
   if (holding) {
     holding.amount += details.amount;
@@ -154,6 +155,7 @@ bot.command('start', (ctx) => {
 });
 
 bot.command('track', async (ctx) => {
+  const db = await loadDatabase();
   const args = ctx.match.split(' ');
   const address = args[0];
   const label = args.slice(1).join(' ') || address;
@@ -169,6 +171,7 @@ bot.command('track', async (ctx) => {
 });
 
 bot.command('tracklist', async (ctx) => {
+  const db = await loadDatabase();
   const wallets = db.wallets
     .filter((w) => w.chatId === ctx.chat.id)
     .map((w) => `${w.address} (${w.label})`)
@@ -177,6 +180,7 @@ bot.command('tracklist', async (ctx) => {
 });
 
 bot.command('untrack', async (ctx) => {
+  const db = await loadDatabase();
   const address = ctx.match;
   db.wallets = db.wallets.filter((w) => w.address !== address || w.chatId !== ctx.chat.id);
   await saveDatabase(db);
@@ -184,6 +188,7 @@ bot.command('untrack', async (ctx) => {
 });
 
 bot.command('stats', async (ctx) => {
+  const db = await loadDatabase();
   const address = ctx.match;
   const transactions = db.transactions.filter((t) => t.address === address);
   const holdings = db.holdings.filter((h) => h.address === address);
@@ -198,94 +203,3 @@ bot.command('stats', async (ctx) => {
 
 // Start bot
 bot.start().catch((err) => console.error('Bot failed to start:', err));    const timestamp = new Date(tx.blockTime * 1000);
-
-    // Save transaction
-    db.transactions.push({ address, signature: tx.signature, type, details, timestamp });
-    await saveDatabase(db);
-
-    // Update holdings
-    updateHoldings(address, details);
-
-    // Send notification
-    const keyboard = new InlineKeyboard()
-      .url('View on Solscan', `https://solscan.io/tx/${tx.signature}`)
-      .url('Chart', details.chartLink || 'https://dexscreener.com');
-    ctx.api.sendMessage(chatId, formatNotification(address, type, details, timestamp), {
-      parse_mode: 'Markdown',
-      reply_markup: keyboard,
-    });
-  });
-}
-
-// Detect transaction type
-function detectTransactionType(tx) {
-  const { instructions } = tx.transaction.message;
-  if (instructions.some((i) => i.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')) {
-    return 'TokenTransfer'; // Simplified; extend for buy/sell/swap
-  }
-  // Add logic for swap (Raydium/Jupiter), bridge (Wormhole), etc.
-  return 'Unknown';
-}
-
-// Parse transaction details
-async function parseTransactionDetails(tx, type) {
-  const db = await loadDatabase();
-  const details = { amount: 0, token: 'SOL', chartLink: null, marketCap: null, coinAddress: null };
-  if (type === 'TokenTransfer') {
-    const tokenProgram = tx.transaction.message.instructions.find(
-      (i) => i.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
-    );
-    if (tokenProgram) {
-      details.amount = tokenProgram.parsed.info.amount / 1e9; // Adjust decimals
-      details.coinAddress = tokenProgram.parsed.info.mint;
-      details.token = await getTokenSymbol(details.coinAddress);
-      details.marketCap = await getMarketCap(details.token);
-      details.chartLink = `https://dexscreener.com/solana/${details.coinAddress}`;
-    }
-  }
-  // Add logic for swaps, bridges, etc.
-  return details;
-}
-
-// Fetch token symbol (placeholder; use Helius/Birdeye API for accuracy)
-async function getTokenSymbol(mint) {
-  return 'TOKEN_X'; // Replace with API call
-}
-
-// Fetch market cap
-async function getMarketCap(token) {
-  try {
-    const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${token.toLowerCase()}`);
-    return response.data.market_data.market_cap.usd;
-  } catch (error) {
-    return null;
-  }
-}
-
-// Update holdings
-async function updateHoldings(address, details) {
-  const db = await loadDatabase();
-  const holding = db.holdings.find((h) => h.address === address && h.token === details.token);
-  if (holding) {
-    holding.amount += details.amount;
-  } else {
-    db.holdings.push({ address, token: details.token, amount: details.amount });
-  }
-  await saveDatabase(db);
-}
-
-// Format notification
-function formatNotification(address, type, details, timestamp) {
-  return `
-*Wallet*: ${address}
-*Type*: ${type}
-*Amount*: ${details.amount} ${details.token}
-*Coin Address*: ${details.coinAddress || 'N/A'}
-*Market Cap*: ${details.marketCap ? `$${details.marketCap}` : 'N/A'}
-*Time*: ${timestamp}
-*Signature*: ${tx.signature}
-  `;
-}
-
-// Start bot
-bot.start();
