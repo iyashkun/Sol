@@ -202,4 +202,4 @@ bot.command('stats', async (ctx) => {
 });
 
 // Start bot
-bot.start().catch((err) => console.error('Bot failed to start:', err));    const timestamp = new Date(tx.blockTime * 1000);
+bot.start().catch((err) => console.error('Bot failed to start:', err));
